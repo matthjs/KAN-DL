@@ -8,3 +8,4 @@ spawn*/
 *.pyc
 config.yml
 *checkpoint*
+.idea

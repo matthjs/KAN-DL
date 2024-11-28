@@ -8,20 +8,21 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-torch = "^2.5.1"
 matplotlib = "^3.9.2"
 scikit-learn = "^1.5.2"
 setuptools = "^75.6.0"
-sympy = "1.13.1"
+sympy = "1.11.1"
 tqdm = "^4.67.1"
 notebook = "^7.2.2"
-pandas = "^2.2.3"
-torchvision = "^0.20.1"
+pandas = "2.2.2"
 fvcore = "*"
 ucimlrepo = "^0.0.7"
-torchaudio = "^2.5.1"
-torchtext = "^0.18.0"
-torchdata = "^0.9.0"
+torchtext = "0.17.2"
+torch = "2.2.2"
+torchaudio = "2.2.2"
+torchdata = "0.7.1"
+torchvision = "0.17.2"
+numpy = "<2"  # For some reason the dependencies require this.
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

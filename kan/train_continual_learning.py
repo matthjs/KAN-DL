@@ -1,6 +1,7 @@
 from __future__ import print_function
 import sys
 import os
+
 os.chdir('/home/yurunpeng/Repos/KANBeFair/kan')
 import argparse
 import warnings
@@ -12,6 +13,7 @@ from fvcore.common.timer import Timer
 from utils import *
 
 warnings.simplefilter(action='ignore', category=UserWarning)
+
 
 def train(args, model, device, train_loader, optimizer, epoch, logger, start_index):
     model.train()
@@ -26,7 +28,7 @@ def train(args, model, device, train_loader, optimizer, epoch, logger, start_ind
             losses = [F.mse_loss(output, target)]
         else:
             raise NotImplementedError
-        
+
         loss = 0
         for l in losses:
             loss = loss + l
@@ -36,7 +38,7 @@ def train(args, model, device, train_loader, optimizer, epoch, logger, start_ind
         if batch_idx % args.log_interval == 0:
             logger_info = 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: '.format(
                 epoch, (batch_idx - start_index) * len(data), len(train_loader.dataset),
-                100. * (batch_idx - start_index) / len(train_loader)) + ",".join([str(l.item()) for l in losses])
+                       100. * (batch_idx - start_index) / len(train_loader)) + ",".join([str(l.item()) for l in losses])
             logger.info(logger_info)
             if args.dry_run:
                 break
@@ -45,11 +47,12 @@ def train(args, model, device, train_loader, optimizer, epoch, logger, start_ind
             logger.info(f"model was saved to {args.exp_id}/{args.operation}_{batch_idx + 1}.pt")
     return model
 
+
 def test(args, model, device, test_loader, logger, name):
     model.eval()
 
     if args.loss == "cross_entropy":
-        
+
         test_loss = 0
         correct = 0
         with torch.no_grad():
@@ -62,12 +65,12 @@ def test(args, model, device, test_loader, logger, name):
 
         test_loss /= len(test_loader.dataset)
 
-        logger.info("\t"+name+' set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
+        logger.info("\t" + name + ' set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
             test_loss, correct, len(test_loader.dataset),
             100. * correct / len(test_loader.dataset)))
 
         return 100. * correct / len(test_loader.dataset)
-    
+
     elif args.loss == "mse":
         test_loss = 0
         with torch.no_grad():
@@ -80,12 +83,13 @@ def test(args, model, device, test_loader, logger, name):
 
         test_loss /= len(test_loader.dataset)
 
-        logger.info("\t"+name+' set: Average loss: {:.6f}'.format(test_loss))
+        logger.info("\t" + name + ' set: Average loss: {:.6f}'.format(test_loss))
 
         return test_loss
-    
+
     else:
         raise NotImplementedError
+
 
 class Continual_Learning_Evaluator:
     def __init__(self, args, test_loaders):
@@ -112,34 +116,37 @@ class Continual_Learning_Evaluator:
         num_datasets = len(self.test_loaders)
         accuracies = [self.accuracies[(num_datasets - 1, i)] for i in range(num_datasets)]
         average_accuracy = numpy.mean(accuracies)
-        backward_transfers = [self.accuracies[(num_datasets - 1, i)] - self.accuracies[(i, i)] for i in range(num_datasets)]
+        backward_transfers = [self.accuracies[(num_datasets - 1, i)] - self.accuracies[(i, i)] for i in
+                              range(num_datasets)]
         average_backward_transfer = numpy.mean(backward_transfers)
-        logger.info(f"average_accuracy {average_accuracy:.2f}, average_backward_transfer: {average_backward_transfer:.2f}")
+        logger.info(
+            f"average_accuracy {average_accuracy:.2f}, average_backward_transfer: {average_backward_transfer:.2f}")
         return average_accuracy, average_backward_transfer
+
 
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch Training')
 
-    parser.add_argument('--model', type=str, default="KAN", #required=True,
+    parser.add_argument('--model', type=str, default="KAN",  # required=True,
                         help='network structure')
-    parser.add_argument('--layers_width', type=int, default=[5], nargs='+', #required=True,
+    parser.add_argument('--layers_width', type=int, default=[5], nargs='+',  # required=True,
                         help='the width of each hidden layer')
     parser.add_argument('--batch_norm', action='store_true', default=False,
                         help='whether use batch normalization')
-    parser.add_argument('--activation_name', type=str, default="gelu", 
+    parser.add_argument('--activation_name', type=str, default="gelu",
                         help='activation function')
-    parser.add_argument('--pre_train_ckpt', type=str, default="", 
+    parser.add_argument('--pre_train_ckpt', type=str, default="",
                         help='path of the pretrained model')
 
-    parser.add_argument('--dataset', type=str, default="FMNIST", #required=True,
+    parser.add_argument('--dataset', type=str, default="FMNIST",  # required=True,
                         help='dataset')
 
     parser.add_argument('--batch-size', type=int, default=1024,
                         help='input batch size for training (default: 1024)')
     parser.add_argument('--test-batch-size', type=int, default=128,
                         help='input batch size for testing (default: 128)')
-    parser.add_argument('--epochs', type=int, default=100, # 100 MNIST pretrain, 5 Finetune
+    parser.add_argument('--epochs', type=int, default=100,  # 100 MNIST pretrain, 5 Finetune
                         help='number of epochs to train (default: 14)')
     parser.add_argument('--lr', type=float, default=0.01,
                         help='learning rate (default: 0.01)')
@@ -158,14 +165,14 @@ def main():
                         help='how many batches to wait before logging training status')
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
-    parser.add_argument('--save-model-interval', type = int, default=-1, 
+    parser.add_argument('--save-model-interval', type=int, default=-1,
                         help='whether save model along training')
     ################# Parameters for KAN #################
-    parser.add_argument('--kan_bspline_grid', type=int, default=5, 
+    parser.add_argument('--kan_bspline_grid', type=int, default=5,
                         help='the grid size of the bspline in the KAN layer')
-    parser.add_argument('--kan_bspline_order', type=int, default=3, 
+    parser.add_argument('--kan_bspline_order', type=int, default=3,
                         help='the order of the bspline in the KAN layer')
-    parser.add_argument('--kan_shortcut_name', type=str, default="zero", 
+    parser.add_argument('--kan_shortcut_name', type=str, default="zero",
                         help='the shortcut(base) function in the KAN layer: zero, identity, silu')
     parser.add_argument('--kan_grid_range', type=float, default=[-1, 1], nargs=2,
                         help='the range of the grid in the KAN layer. default is [-1, 1]. but for general normalized data, it can be larger.')
@@ -188,30 +195,30 @@ def main():
     args.exp_id = f"../logs/{args.dataset}/{args.model}/"
     args.exp_id = args.exp_id + f"{'_'.join([str(w) for w in args.layers_width])}__{args.batch_norm}__{args.activation_name}"
     args.exp_id = args.exp_id + f"__{args.batch_size}__{args.epochs}__{args.lr}__{args.seed}"
-    os.makedirs(args.exp_id, exist_ok = True)
+    os.makedirs(args.exp_id, exist_ok=True)
     ################# id for KAN #################
     if args.model == "KAN":
-        args.exp_id = args.exp_id + f"/{args.kan_bspline_grid}__{args.kan_bspline_order}__{args.kan_shortcut_name}"+ f"__{'_'.join([str(w) for w in args.kan_grid_range])}"
-        os.makedirs(args.exp_id, exist_ok = True)
+        args.exp_id = args.exp_id + f"/{args.kan_bspline_grid}__{args.kan_bspline_order}__{args.kan_shortcut_name}" + f"__{'_'.join([str(w) for w in args.kan_grid_range])}"
+        os.makedirs(args.exp_id, exist_ok=True)
     ################# id for KAN #################
     ################# id for BSpline MLP #################
     elif args.model == "BSpline_MLP":
-        args.exp_id = args.exp_id + f"/{args.kan_bspline_grid}__{args.kan_bspline_order}"+ f"__{'_'.join([str(w) for w in args.kan_grid_range])}"
-        os.makedirs(args.exp_id, exist_ok = True)
+        args.exp_id = args.exp_id + f"/{args.kan_bspline_grid}__{args.kan_bspline_order}" + f"__{'_'.join([str(w) for w in args.kan_grid_range])}"
+        os.makedirs(args.exp_id, exist_ok=True)
     ################# id for BSpline MLP #################
     ################# id for BSpline First MLP #################
     elif args.model == "BSpline_First_MLP":
-        args.exp_id = args.exp_id + f"/{args.kan_bspline_grid}__{args.kan_bspline_order}"+ f"__{'_'.join([str(w) for w in args.kan_grid_range])}"
-        os.makedirs(args.exp_id, exist_ok = True)
+        args.exp_id = args.exp_id + f"/{args.kan_bspline_grid}__{args.kan_bspline_order}" + f"__{'_'.join([str(w) for w in args.kan_grid_range])}"
+        os.makedirs(args.exp_id, exist_ok=True)
     ################# id for BSpline First MLP #################
     ################# id for MLP #################
     elif args.model == "MLP":
         args.exp_id = args.exp_id + f"/default"
-        os.makedirs(args.exp_id, exist_ok = True)
+        os.makedirs(args.exp_id, exist_ok=True)
     ################# id for MLP #################
     else:
         raise NotImplementedError
-    
+
     if os.path.exists(os.path.join(args.exp_id, "log")):
         with open(os.path.join(args.exp_id, "log"), "r") as f:
             lines = f.readlines()
@@ -221,7 +228,7 @@ def main():
 
     logger, formatter = get_logger(args.exp_id, None, "log", level=logging.INFO)
 
-    train_loaders, test_loaders, num_classes, input_size = get_continual_loader(args, use_cuda = use_cuda)
+    train_loaders, test_loaders, num_classes, input_size = get_continual_loader(args, use_cuda=use_cuda)
 
     args.output_size = num_classes
     args.input_size = input_size
@@ -246,45 +253,48 @@ def main():
                 fvctimer.resume()
             else:
                 fvctimer.reset()
-            train(args, model, device, train_loader, optimizer, epoch, logger = logger, start_index = (epoch - 1) *len(train_loader))
+            train(args, model, device, train_loader, optimizer, epoch, logger=logger,
+                  start_index=(epoch - 1) * len(train_loader))
             fvctimer.pause()
-            train_metric = test(args, model, device, train_loader, logger = logger, name = "train")
-            test_metric = test(args, model, device, test_loader, logger = logger, name = "test")
+            train_metric = test(args, model, device, train_loader, logger=logger, name="train")
+            test_metric = test(args, model, device, test_loader, logger=logger, name="test")
         cle.eval(model, device, dataset_index, logger)
 
     total_training_time = fvctimer.seconds()
     average_training_time_per_epoch = fvctimer.avg_seconds()
-    logger.info(f"total training time: {total_training_time:,} seconds; average training time per epoch: {average_training_time_per_epoch:,} seconds")
+    logger.info(
+        f"total training time: {total_training_time:,} seconds; average training time per epoch: {average_training_time_per_epoch:,} seconds")
 
     average_accuracy, average_backward_transfer = cle.summarize(logger)
 
     write_results(
-        args, subfix = "_continual_learning",
-        average_accuracy = average_accuracy,
-        average_backward_transfer = average_backward_transfer,
-        num_parameters = num_parameters,
-        flops = flops,
-        total_training_time = total_training_time,
-        average_training_time_per_epoch = average_training_time_per_epoch
+        args, subfix="_continual_learning",
+        average_accuracy=average_accuracy,
+        average_backward_transfer=average_backward_transfer,
+        num_parameters=num_parameters,
+        flops=flops,
+        total_training_time=total_training_time,
+        average_training_time_per_epoch=average_training_time_per_epoch
     )
 
     if args.save_model:
         torch.save(
-            {   
-                "args" : args,
-                "state_dict" : model.state_dict(),
-                "metrics" : {
-                    "average_accuracy" : average_accuracy,
-                    "average_backward_transfer" : average_backward_transfer,
-                    "num_parameters" : num_parameters,
-                    "flops" : flops,
-                    "total_training_time" : total_training_time,
-                    "average_training_time_per_epoch" : average_training_time_per_epoch
+            {
+                "args": args,
+                "state_dict": model.state_dict(),
+                "metrics": {
+                    "average_accuracy": average_accuracy,
+                    "average_backward_transfer": average_backward_transfer,
+                    "num_parameters": num_parameters,
+                    "flops": flops,
+                    "total_training_time": total_training_time,
+                    "average_training_time_per_epoch": average_training_time_per_epoch
                 }
             }, f"{args.exp_id}/ckpt.pt")
         logger.info(f"model was saved to {args.exp_id}/ckpt.pt")
 
     logger.info(f"training process was finished")
+
 
 if __name__ == '__main__':
     main()
