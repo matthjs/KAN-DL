@@ -1,7 +1,7 @@
 from __future__ import print_function
 import sys
 import os
-os.chdir('/home/yurunpeng/Repos/KANBeFair/src')
+os.chdir('/home/yurunpeng/Repos/KANBeFair/kan')
 import argparse
 import warnings
 import torch, numpy
