@@ -1,15 +1,8 @@
 from __future__ import print_function
-import sys
-import os
-
-os.chdir('/home/yurunpeng/Repos/KANBeFair/kan')
 import argparse
 import warnings
-import torch, numpy
 import torch.optim as optim
-from torchvision import datasets, transforms
 from fvcore.common.timer import Timer
-
 from utils import *
 
 warnings.simplefilter(action='ignore', category=UserWarning)
